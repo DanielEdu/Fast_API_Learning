@@ -52,3 +52,12 @@ def show_person(
     person_id: int = Path(..., gt=0)
 ):
     return {person_id: "It exist"}
+
+
+# Request Body
+@app.put("/person/{person_id}")
+def update_person(
+    person_id: int = Path(..., gt=0),
+    person: Person = Body(...)
+):
+    return person
