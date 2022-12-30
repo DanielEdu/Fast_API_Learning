@@ -1,7 +1,8 @@
 #Python
 from typing import Optional
+from enum import Enum
 #Pydantic
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 #FasAPI
 from fastapi import FastAPI, Body, Query, Path
 
@@ -10,12 +11,36 @@ app = FastAPI()
 
 
 # Models
+class HairColor(Enum):
+    whith = "whith"
+    brown = "brown"
+    black = "black"
+    blonde = "blonde"
+    red = "red"
+
 class Person(BaseModel):
-    first_name: str
-    last_name: str
+    first_name: str = Field(..., min_length=1, max_length=40)  # ... mandatory
+    last_name: str = Field(..., min_length=1, max_length=40)
     age: int
-    hair_color: Optional[str] = None
-    is_married: Optional[bool] = None
+    hair_color: Optional[HairColor] = Field(default=None)  # validar usando la clase HairColor
+    is_married: Optional[bool] = Field(default=None)
+
+    class Config:
+        schema_extra = {
+            "example": {
+                'first_name':"Daniel",
+                "last_name":"Portugal",
+                "age": 33,
+                "hair_color": "black",
+                "is_married": False
+            }
+
+        }
+
+class Location(BaseModel):
+    city:  str = Field(default=None, min_length=1, max_length=30, example="Arequipa")
+    state:  str = Field(default=None, min_length=1, max_length=30, example="Arequipa")
+    country:  str = Field(default=None, min_length=1, max_length=30, example="Peru")
 
 
 @app.get("/")
@@ -57,7 +82,11 @@ def show_person(
 # Request Body
 @app.put("/person/{person_id}")
 def update_person(
-    person_id: int = Path(..., gt=0),
-    person: Person = Body(...)
+    person_id: int = Path(...,description="Person ID", gt=0),
+    person: Person = Body(...),  
+    location: Location = Body(...)
 ):
-    return person
+    result = person.dict()
+    result.update(location.dict())  # anidar 2 request body
+    return result
+    # return person
